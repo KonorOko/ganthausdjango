@@ -1,4 +1,3 @@
-from datetime import datetime
 from rest_framework import viewsets
 from .serializer import MovimientosCajaChicaSerializer, MovimientosBalanceSerializer, BalanceTotalSerializer, MovimientosDataSerializer, AnaliticsDataSerializer
 from .models import MovimientosCajaChica
@@ -10,7 +9,13 @@ import pandas as pd
 
 class MovimientosView(viewsets.ModelViewSet):
     serializer_class = MovimientosCajaChicaSerializer
-    queryset = MovimientosCajaChica.objects.all()
+
+    def get_queryset(self):
+        if MovimientosCajaChica.objects.count() == 0:
+            queryset = []
+        else:
+            queryset = MovimientosCajaChica.objects.all()
+        return queryset
 
 
 class MovimientosBalance(viewsets.ModelViewSet):
@@ -32,7 +37,7 @@ class BalanceTotal(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if MovimientosCajaChica.objects.count() == 0:
-            return []
+            return [{'cantidad': 0, 'movimientos': 0}]
         else:
             df = pd.DataFrame(MovimientosCajaChica.objects.all().values())
             balance_total = df['cantidad'].sum()
@@ -66,13 +71,15 @@ class MovimientosGasolina(viewsets.ModelViewSet):
                             .objects.values('motivo')
                             .annotate(cantidad=Sum(Abs('cantidad')))
                             .filter(fecha__month=today.month))
-            grouped_transferencias = grouped_data.filter(motivo__icontains='gasolina')
+            grouped_transferencias = grouped_data.filter(
+                motivo__icontains='gasolina')
             queryset = grouped_transferencias
             return queryset
 
+
 class MovimientosTransacciones(viewsets.ModelViewSet):
     serializer_class = MovimientosDataSerializer
-    
+
     def get_queryset(self):
         if MovimientosCajaChica.objects.count() == 0:
             return []
@@ -82,13 +89,15 @@ class MovimientosTransacciones(viewsets.ModelViewSet):
                             .objects.values('motivo')
                             .annotate(cantidad=Sum(Abs('cantidad')))
                             .filter(fecha__month=today.month))
-            grouped_transferencias = grouped_data.filter(Q(motivo__icontains='transferencia') | Q(motivo__icontains='deposito'))
+            grouped_transferencias = grouped_data.filter(
+                Q(motivo__icontains='transferencia') | Q(motivo__icontains='deposito'))
             queryset = grouped_transferencias
             return queryset
-        
+
+
 class MovimientosApoyos(viewsets.ModelViewSet):
     serializer_class = MovimientosDataSerializer
-    
+
     def get_queryset(self):
         if MovimientosCajaChica.objects.count() == 0:
             return []
@@ -98,16 +107,18 @@ class MovimientosApoyos(viewsets.ModelViewSet):
                             .objects.values('motivo')
                             .annotate(cantidad=Sum(Abs('cantidad')))
                             .filter(fecha__month=today.month))
-            grouped_transferencias = grouped_data.filter(motivo__icontains='apoyo')
+            grouped_transferencias = grouped_data.filter(
+                motivo__icontains='apoyo')
             queryset = grouped_transferencias
             return queryset
+
 
 class AnaliticsData(viewsets.ModelViewSet):
     serializer_class = AnaliticsDataSerializer
 
     def get_queryset(self):
         if MovimientosCajaChica.objects.count() == 0:
-            return []
+            return [{'motivo': 'gasolina', 'cantidad_total': 0}, {'motivo': 'transferencias', 'cantidad_total': 0}, {'motivo': 'apoyos', 'cantidad_total': 0}, {'motivo': 'otros', 'cantidad_total': 0}]
         else:
             today = timezone.now()
             today.month
@@ -115,22 +126,30 @@ class AnaliticsData(viewsets.ModelViewSet):
                             .objects.values('motivo')
                             .annotate(grouped_cantidad=Sum('cantidad'))
                             .filter(fecha__month=today.month))
-            
+
             # gasolina
-            grouped_gasolina = grouped_data.filter(motivo__icontains='gasolina')
-            gasolina_total = grouped_gasolina.aggregate(cantidad_total_abs=Sum(Abs('grouped_cantidad')))
-            dict_gasolina = {"motivo": "gasolina", 'cantidad_total': gasolina_total['cantidad_total_abs']}
-            
+            grouped_gasolina = grouped_data.filter(
+                motivo__icontains='gasolina')
+            gasolina_total = grouped_gasolina.aggregate(
+                cantidad_total_abs=Sum(Abs('grouped_cantidad')))
+            dict_gasolina = {"motivo": "gasolina",
+                             'cantidad_total': gasolina_total['cantidad_total_abs']}
+
             # transferencias
-            grouped_transferencias = grouped_data.filter(Q(motivo__icontains='transferencia') | Q(motivo__icontains='deposito'))
-            transferencias_total = grouped_transferencias.aggregate(cantidad_total_abs=Sum(Abs('grouped_cantidad')))
-            dict_transferencias = {"motivo": "transferencias", 'cantidad_total': transferencias_total['cantidad_total_abs']}
-            
+            grouped_transferencias = grouped_data.filter(
+                Q(motivo__icontains='transferencia') | Q(motivo__icontains='deposito'))
+            transferencias_total = grouped_transferencias.aggregate(
+                cantidad_total_abs=Sum(Abs('grouped_cantidad')))
+            dict_transferencias = {"motivo": "transferencias",
+                                   'cantidad_total': transferencias_total['cantidad_total_abs']}
+
             # apoyos
             grouped_apoyos = grouped_data.filter(motivo__icontains='apoyo')
-            apoyos_total = grouped_apoyos.aggregate(cantidad_total_abs=Sum(Abs('grouped_cantidad')))
-            dict_apoyos = {"motivo": "apoyos", 'cantidad_total': apoyos_total['cantidad_total_abs']} 
-            
+            apoyos_total = grouped_apoyos.aggregate(
+                cantidad_total_abs=Sum(Abs('grouped_cantidad')))
+            dict_apoyos = {"motivo": "apoyos",
+                           'cantidad_total': apoyos_total['cantidad_total_abs']}
+
             # otros
             otros_registros = (
                 MovimientosCajaChica.objects
@@ -141,8 +160,11 @@ class AnaliticsData(viewsets.ModelViewSet):
                 .values('motivo')
                 .annotate(total=Sum('cantidad'))
             )
-            otros_total = otros_registros.aggregate(cantidad_total_abs=Sum(Abs('total')))
-            dict_otros = {"motivo": "otros", 'cantidad_total': otros_total['cantidad_total_abs']}
-            
-            queryset = [dict_gasolina, dict_transferencias, dict_apoyos, dict_otros]
+            otros_total = otros_registros.aggregate(
+                cantidad_total_abs=Sum(Abs('total')))
+            dict_otros = {"motivo": "otros",
+                          'cantidad_total': otros_total['cantidad_total_abs']}
+
+            queryset = [dict_gasolina, dict_transferencias,
+                        dict_apoyos, dict_otros]
             return queryset

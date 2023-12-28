@@ -15,5 +15,4 @@ router.register(r'analitics_data', views.AnaliticsData, 'analitics_data')
 
 urlpatterns = [
     path("api/v1/", include(router.urls)),
-    path("docs/", include_docs_urls(title="Documentación API Caja Chica")),
 ]
