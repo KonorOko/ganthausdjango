@@ -48,14 +48,13 @@ class BalanceTotal(viewsets.ModelViewSet):
         if MovimientosCajaChica.objects.count() == 0:
             return Response([])
 
-        queryset = MovimientosCajaChica.objects.annotate(
-            cantidad_total=Sum('cantidad'),
-            movimientos=Count('id', distinct=True),
-        ).values()
-        data = {'cantidad': f"{queryset[0]['cantidad_total']:,.2f}", 'movimientos': queryset[0]['movimientos']}
+        total_cantidad = MovimientosCajaChica.objects.aggregate(cantidad_total=Sum('cantidad'))
+        total_movimientos = MovimientosCajaChica.objects.aggregate(movimientos=Count('id'))
+
+        data = {'cantidad': f"{total_cantidad['cantidad_total']:,.2f}", 'movimientos': total_movimientos['movimientos']}
 
         return Response([data])
-
+    
 
 class UltimosMovimientos(viewsets.ModelViewSet):
     permission_classes = (DjangoModelPermissions,)
