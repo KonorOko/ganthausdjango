@@ -5,6 +5,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializer import MyTokenObtainPairSerializer
+from .serializer import UserSerializer
+from rest_framework import viewsets
+from django.contrib.auth.models import User
+
   
 class HomeView(APIView):
     permission_classes = (IsAuthenticated, )
@@ -30,3 +34,14 @@ class LogoutView(APIView):
         except Exception as e:
             print("Ha ocurrido un error:", e)
             return Response(status=status.HTTP_400_BAD_REQUEST)
+        
+
+class UserView(viewsets.ModelViewSet):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserSerializer
+    def get_queryset(self):
+        queryset = [{
+            'username': self.request.user,
+            'group': self.request.user.groups.first()
+        }]
+        return queryset

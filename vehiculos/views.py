@@ -1,5 +1,5 @@
 from rest_framework import viewsets
-from .serializer import VehiculosSerializer, VerificacionesSerializer, FirstVerificacionesSerializer
+from .serializer import VehiculosSerializer, VerificacionesSerializer, FirstVerificacionesSerializer, TenenciasSerializer
 from .models import Vehiculos, Verificaciones
 
 # Create your views here.
@@ -20,3 +20,7 @@ class FirstVerificacionesView(viewsets.ModelViewSet):
         else:
             queryset = Verificaciones.objects.all().order_by('fecha')[:3]
             return queryset
+        
+class TenenciasView(viewsets.ModelViewSet):
+    serializer_class = TenenciasSerializer
+    queryset = Verificaciones.objects.all()
