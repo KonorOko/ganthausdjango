@@ -24,5 +24,11 @@ class Tenencias(models.Model):
     
     def __str__(self) -> str:
         return f'{self.vehiculo} - {self.fecha}'
+
+class Servicios(models.Model):
+    vehiculo = models.ForeignKey(Vehiculos, on_delete=models.CASCADE)
+    fecha = models.DateField()
     
+    def __str__(self) -> str:
+        return f'{self.vehiculo} - {self.fecha}'
     

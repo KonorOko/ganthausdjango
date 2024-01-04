@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Vehiculos, Verificaciones, Tenencias
+from .models import Vehiculos, Verificaciones, Tenencias, Servicios
 
 class VehiculosSerializer(serializers.ModelSerializer):
     class Meta:
@@ -28,3 +28,7 @@ class TenenciasSerializer(serializers.ModelSerializer):
         model = Tenencias
         fields = ('id', 'vehiculo', 'fecha')
         
+class ServiciosSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Servicios
+        fields = ('id', 'vehiculo', 'fecha')
