@@ -15,7 +15,7 @@ class MovimientosView(viewsets.ModelViewSet):
         if MovimientosCajaChica.objects.count() == 0 or self.request.user.groups.filter(name='Admin').exists() == False:
             queryset = MovimientosCajaChica.objects.none()
         else:
-            queryset = MovimientosCajaChica.objects.all()
+            queryset = MovimientosCajaChica.objects.all().order_by('id')
         return queryset
 
 
@@ -169,6 +169,13 @@ class AnaliticsData(viewsets.ModelViewSet):
             cantidad_total_abs=Sum(Abs('grouped_cantidad')))
         dict_apoyos = {"motivo": "apoyos",
                         'cantidad_total': apoyos_total['cantidad_total_abs']}
+        
+        # comisiones
+        grouped_comisiones = grouped_data.filter(Q(motivo__icontains='comision') | Q(motivo__icontains='comisiones'))
+        comisiones_total = grouped_comisiones.aggregate(
+            cantidad_total_abs=Sum(Abs('grouped_cantidad')))
+        dict_comisiones = {"motivo": "comisiones",
+                        'cantidad_total': comisiones_total['cantidad_total_abs']}
 
         # otros
         otros_registros = (
@@ -186,5 +193,6 @@ class AnaliticsData(viewsets.ModelViewSet):
                         'cantidad_total': otros_total['cantidad_total_abs']}
 
         queryset = [dict_gasolina, dict_transferencias,
-                    dict_apoyos, dict_otros]
+                    dict_apoyos, dict_comisiones, dict_otros]
+        
         return Response(queryset)
