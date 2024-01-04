@@ -152,30 +152,38 @@ class AnaliticsData(viewsets.ModelViewSet):
             motivo__icontains='gasolina')
         gasolina_total = grouped_gasolina.aggregate(
             cantidad_total_abs=Sum(Abs('grouped_cantidad')))
+        if gasolina_total['cantidad_total_abs'] == None:
+            gasolina_total['cantidad_total_abs'] = 0
         dict_gasolina = {"motivo": "gasolina",
-                            'cantidad_total': gasolina_total['cantidad_total_abs']}
+                            'cantidad_total': f'{gasolina_total["cantidad_total_abs"]:,.2f}'}
 
         # transferencias
         grouped_transferencias = grouped_data.filter(
             Q(motivo__icontains='transferencia') | Q(motivo__icontains='deposito'))
         transferencias_total = grouped_transferencias.aggregate(
             cantidad_total_abs=Sum(Abs('grouped_cantidad')))
+        if transferencias_total['cantidad_total_abs'] == None:
+            transferencias_total['cantidad_total_abs'] = 0
         dict_transferencias = {"motivo": "transferencias",
-                                'cantidad_total': transferencias_total['cantidad_total_abs']}
+                                'cantidad_total': f'{transferencias_total["cantidad_total_abs"]:,.2f}'}
 
         # apoyos
         grouped_apoyos = grouped_data.filter(motivo__icontains='apoyo')
         apoyos_total = grouped_apoyos.aggregate(
             cantidad_total_abs=Sum(Abs('grouped_cantidad')))
+        if apoyos_total['cantidad_total_abs'] == None:
+            apoyos_total['cantidad_total_abs'] = 0
         dict_apoyos = {"motivo": "apoyos",
-                        'cantidad_total': apoyos_total['cantidad_total_abs']}
+                        'cantidad_total': f'{apoyos_total["cantidad_total_abs"]:,.2f}'}
         
         # comisiones
         grouped_comisiones = grouped_data.filter(Q(motivo__icontains='comision') | Q(motivo__icontains='comisiones'))
         comisiones_total = grouped_comisiones.aggregate(
             cantidad_total_abs=Sum(Abs('grouped_cantidad')))
+        if comisiones_total['cantidad_total_abs'] == None:
+            comisiones_total['cantidad_total_abs'] = 0
         dict_comisiones = {"motivo": "comisiones",
-                        'cantidad_total': comisiones_total['cantidad_total_abs']}
+                        'cantidad_total': f'{comisiones_total["cantidad_total_abs"]:,.2f}'}
 
         # otros
         otros_registros = (
@@ -189,8 +197,10 @@ class AnaliticsData(viewsets.ModelViewSet):
         )
         otros_total = otros_registros.aggregate(
             cantidad_total_abs=Sum(Abs('total')))
+        if otros_total['cantidad_total_abs'] == None:
+            otros_total['cantidad_total_abs'] = 0
         dict_otros = {"motivo": "otros",
-                        'cantidad_total': otros_total['cantidad_total_abs']}
+                        'cantidad_total': f'{otros_total["cantidad_total_abs"]:,.2f}'}
 
         queryset = [dict_gasolina, dict_transferencias,
                     dict_apoyos, dict_comisiones, dict_otros]

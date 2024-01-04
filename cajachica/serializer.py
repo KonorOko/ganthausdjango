@@ -35,7 +35,7 @@ class MovimientosDataSerializer(serializers.ModelSerializer):
 
 class AnaliticsDataSerializer(serializers.ModelSerializer):
     motivo = serializers.CharField()
-    cantidad_total = serializers.FloatField()
+    cantidad_total = serializers.StringRelatedField()
 
     class Meta:
         model = MovimientosCajaChica
