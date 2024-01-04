@@ -4,7 +4,6 @@ from .models import MovimientosCajaChica
 from django.db.models.functions import Abs
 from django.db.models import Sum, Q, Count
 from django.utils import timezone
-import pandas as pd
 from rest_framework.permissions import  DjangoModelPermissions
 from rest_framework.response import Response
 
