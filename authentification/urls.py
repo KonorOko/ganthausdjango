@@ -5,4 +5,5 @@ urlpatterns = [
     path('home/', views.HomeView.as_view(), name ='home'),
     path('logout/', views.LogoutView.as_view(), name ='logout'),
     path('token/', views.MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('users/', views.UserView.as_view({'get': 'list'}), name='users'),
 ]

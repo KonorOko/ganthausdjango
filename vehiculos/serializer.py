@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Vehiculos, Verificaciones
+from .models import Vehiculos, Verificaciones, Tenencias
 
 class VehiculosSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,4 +22,9 @@ class FirstVerificacionesSerializer(serializers.ModelSerializer):
         else:
             queryset = Verificaciones.objects.all().order_by('-fecha')[:3]
             return queryset
+        
+class TenenciasSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tenencias
+        fields = ('id', 'vehiculo', 'fecha')
         
