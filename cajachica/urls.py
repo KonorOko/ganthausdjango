@@ -12,6 +12,7 @@ router.register(r'movimientos_gasolina', views.MovimientosGasolina, 'movimientos
 router.register(r'movimientos_transacciones', views.MovimientosTransacciones, 'movimientos_transacciones')
 router.register(r'movimientos_apoyos', views.MovimientosApoyos, 'movimientos_apoyos')
 router.register(r'analitics_data', views.AnaliticsData, 'analitics_data')
+router.register(r'movimientos_comisiones', views.MovimientosComisiones, 'movimientos_comisiones')
 
 urlpatterns = [
     path("api/v1/", include(router.urls)),

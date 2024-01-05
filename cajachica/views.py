@@ -126,6 +126,27 @@ class MovimientosApoyos(viewsets.ModelViewSet):
                 motivo__icontains='apoyo')
             queryset = grouped_transferencias
             return queryset
+        
+        
+class MovimientosComisiones(viewsets.ModelViewSet):
+    permission_classes = (DjangoModelPermissions,)
+    serializer_class = MovimientosDataSerializer
+    
+    def get_queryset(self):
+        if MovimientosCajaChica.objects.count() == 0 or self.request.user.groups.filter(name='Admin').exists() == False:
+            queryset = MovimientosCajaChica.objects.none()
+            return queryset
+        
+        else:
+            today = timezone.now()
+            grouped_data = (MovimientosCajaChica
+                            .object.values('motivo')
+                            .annotate(cantidad=Sum(Abs('cantidad')))
+                            .filter(fecha__month=today.month))
+            grouped_transferencias = grouped_data.filter(
+                Q(motivo__icontains='comision') | Q(motivo__icontains='comisiones'))
+            queryset = grouped_transferencias
+            return queryset
 
 
 class AnaliticsData(viewsets.ModelViewSet):
