@@ -64,7 +64,7 @@ class UltimosMovimientos(viewsets.ModelViewSet):
             queryset = MovimientosCajaChica.objects.none()
             return queryset
         else:
-            ultimos_movimientos = MovimientosCajaChica.objects.all()[:10]
+            ultimos_movimientos = MovimientosCajaChica.objects.all()[10:]
             return ultimos_movimientos
 
 
