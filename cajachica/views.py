@@ -140,7 +140,7 @@ class MovimientosComisiones(viewsets.ModelViewSet):
         else:
             today = timezone.now()
             grouped_data = (MovimientosCajaChica
-                            .object.values('motivo')
+                            .objects.values('motivo')
                             .annotate(cantidad=Sum(Abs('cantidad')))
                             .filter(fecha__month=today.month))
             grouped_transferencias = grouped_data.filter(
