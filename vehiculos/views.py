@@ -29,6 +29,28 @@ class TenenciasView(viewsets.ModelViewSet):
     queryset = Tenencias.objects.all()
     
 
+class FirstTenenciasView(viewsets.ModelViewSet):
+    serializer_class = TenenciasSerializer
+    
+    def get_queryset(self):
+        if Tenencias.objects.count() == 0:
+            return []
+        else:
+            queryset = Tenencias.objects.all().order_by('fecha')[:3]
+            return queryset
+    
+
 class ServiciosView(viewsets.ModelViewSet):
     serializer_class = ServiciosSerializer
     queryset = Servicios.objects.all()
+    
+
+class FirstServiciosView(viewsets.ModelViewSet):
+    serializer_class = ServiciosSerializer
+    
+    def get_queryset(self):
+        if Servicios.objects.count() == 0:
+            return []
+        else:
+            queryset = Servicios.objects.all().order_by('fecha')[:3]
+            return queryset

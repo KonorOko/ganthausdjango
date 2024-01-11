@@ -75,7 +75,7 @@ class UltimosMovimientos(viewsets.ModelViewSet):
             queryset = MovimientosCajaChica.objects.none()
             return queryset
         else:
-            ultimos_movimientos = MovimientosCajaChica.objects.all()[:10]
+            ultimos_movimientos = MovimientosCajaChica.objects.order_by("-id")[:10]
             return ultimos_movimientos
 
 
@@ -135,6 +135,27 @@ class MovimientosApoyos(viewsets.ModelViewSet):
                             .filter(fecha__month=today.month))
             grouped_transferencias = grouped_data.filter(
                 motivo__icontains='apoyo')
+            queryset = grouped_transferencias
+            return queryset
+        
+        
+class MovimientosComisiones(viewsets.ModelViewSet):
+    permission_classes = (DjangoModelPermissions,)
+    serializer_class = MovimientosDataSerializer
+    
+    def get_queryset(self):
+        if MovimientosCajaChica.objects.count() == 0 or self.request.user.groups.filter(name='Admin').exists() == False:
+            queryset = MovimientosCajaChica.objects.none()
+            return queryset
+        
+        else:
+            today = timezone.now()
+            grouped_data = (MovimientosCajaChica
+                            .objects.values('motivo')
+                            .annotate(cantidad=Sum(Abs('cantidad')))
+                            .filter(fecha__month=today.month))
+            grouped_transferencias = grouped_data.filter(
+                Q(motivo__icontains='comision') | Q(motivo__icontains='comisiones'))
             queryset = grouped_transferencias
             return queryset
 
