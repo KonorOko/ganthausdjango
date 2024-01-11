@@ -2,6 +2,7 @@ from django.urls import path, include
 from rest_framework import routers
 from rest_framework.documentation import include_docs_urls
 from cajachica import views
+from cajachica import serializer
 
 router = routers.DefaultRouter()
 router.register(r'movimientos', views.MovimientosView, 'movimientos')
@@ -12,7 +13,12 @@ router.register(r'movimientos_gasolina', views.MovimientosGasolina, 'movimientos
 router.register(r'movimientos_transacciones', views.MovimientosTransacciones, 'movimientos_transacciones')
 router.register(r'movimientos_apoyos', views.MovimientosApoyos, 'movimientos_apoyos')
 router.register(r'analitics_data', views.AnaliticsData, 'analitics_data')
+router.register(r'cajachica_page', views.CajaChicaPage, 'cajachica_page')
+router.register(r'notas', views.NotasCajaChicaView, 'notas')
+router.register(r'cajachica_analisis', views.CajaChicaAnalisis, 'cajachica_analisis')
+router.register(r'cajachica_analisismid', views.CajaChicaAnalisisMid, 'cajachica_analisismid')
 
 urlpatterns = [
     path("api/v1/", include(router.urls)),
+    path("api/v1/cajachica_excel/", views.CajaChicaExcel.as_view(), name="cajachica_excel"),
 ]
