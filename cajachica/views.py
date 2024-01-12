@@ -344,19 +344,16 @@ class CajaChicaAnalisis(viewsets.GenericViewSet):
         grouped_months = MovimientosCajaChica.objects.filter(Q(fecha__year=today.year) | Q(fecha__year=today.year - 1)).annotate(
             mes=TruncMonth('fecha')).values('mes').annotate(cantidad=Sum('cantidad')).values('mes', 'cantidad')
 
-        # obtiene los datos agrupados por mes para el año actual y el año anterior
         grouped_months_current_year = MovimientosCajaChica.objects.filter(fecha__year=today.year).annotate(
             mes=TruncMonth('fecha')).values('mes').annotate(cantidad=Sum('cantidad')).values('mes', 'cantidad')
         grouped_months_previous_year = MovimientosCajaChica.objects.filter(fecha__year=today.year - 1).annotate(
             mes=TruncMonth('fecha')).values('mes').annotate(cantidad=Sum('cantidad')).values('mes', 'cantidad')
 
-        # convierte los datos agrupados en diccionarios con el mes como clave
         grouped_months_current_year_dict = {
             item['mes'].month: item['cantidad'] for item in grouped_months_current_year}
         grouped_months_previous_year_dict = {
             item['mes'].month: item['cantidad'] for item in grouped_months_previous_year}
 
-        # crea la lista de diccionarios
         balance_anual_agrupado = []
         for i in range(1, 13):
             month_dict = {
