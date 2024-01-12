@@ -458,10 +458,25 @@ class CajaChicaAnalisisMid(viewsets.GenericViewSet):
         else:
             grouped_days_previous_month = MovimientosCajaChica.objects.filter(fecha__year=today.year, fecha__month=today.month - 1).annotate(
                 dia=ExtractDay('fecha')).values('dia').annotate(cantidad=Sum('cantidad')).values('dia', 'cantidad')
+            
+        grouped_weeks_current_month_dict = {}
+        grouped_weeks_previous_month_dict = {}
 
-        # Convierte los datos agrupados en diccionarios con la semana como clave
-        grouped_weeks_current_month_dict = {(item['dia'] - 1) // 7 + 1: item['cantidad'] for item in grouped_days_current_month}
-        grouped_weeks_previous_month_dict = {(item['dia'] - 1) // 7 + 1: item['cantidad'] for item in grouped_days_previous_month}
+        for item in grouped_days_current_month:
+            dia = item['dia']
+            cantidad = item['cantidad']
+
+            semana = (dia - 1) // 7 + 1
+
+            grouped_weeks_current_month_dict[semana] = grouped_weeks_current_month_dict.get(semana, 0) + cantidad
+        
+        for item in grouped_days_previous_month:
+            dia = item['dia']
+            cantidad = item['cantidad']
+
+            semana = (dia - 1) // 7 + 1
+
+            grouped_weeks_previous_month_dict[semana] = grouped_weeks_previous_month_dict.get(semana, 0) + cantidad
 
         comparation_month = []
         for i in range(1, 5):
@@ -475,7 +490,7 @@ class CajaChicaAnalisisMid(viewsets.GenericViewSet):
         grouped_data = (MovimientosCajaChica
                         .objects.values('motivo')
                         .annotate(grouped_cantidad=Sum('cantidad'))
-                        .filter(fecha__month=today.month))
+                        .filter(cantidad__lt=0, fecha__month=today.month, fecha__year=today.year))
 
         # gasolina
         grouped_gasolina = grouped_data.filter(
