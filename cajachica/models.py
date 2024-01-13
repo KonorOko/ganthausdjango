@@ -12,8 +12,8 @@ class MovimientosCajaChica(models.Model):
 class NotasCajaChica(models.Model):
     id = models.AutoField(primary_key=True)
     nota = models.CharField(max_length=500)
-    fecha = models.DateField()
-    hora = models.TimeField()
+    fecha = models.DateField(blank=True, null=True)
+    hora = models.TimeField(blank=True, null=True)
     
     def __str__(self) -> str:
         return f'{self.nota} - {self.fecha}'

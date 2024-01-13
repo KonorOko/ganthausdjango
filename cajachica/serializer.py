@@ -6,40 +6,6 @@ class MovimientosCajaChicaSerializer(serializers.ModelSerializer):
     class Meta:
         model = MovimientosCajaChica
         fields = '__all__'
-
-
-class MovimientosBalanceSerializer(serializers.ModelSerializer):
-    cantidad = serializers.FloatField()
-
-    class Meta:
-        model = MovimientosCajaChica
-        exclude = ['motivo', 'id']
-
-
-class BalanceTotalSerializer(serializers.ModelSerializer):
-    cantidad = serializers.StringRelatedField()
-    movimientos = serializers.IntegerField()
-
-    class Meta:
-        model = MovimientosCajaChica
-        exclude = ['motivo', 'id', 'fecha']
-
-
-class MovimientosDataSerializer(serializers.ModelSerializer):
-    cantidad = serializers.FloatField()
-
-    class Meta:
-        model = MovimientosCajaChica
-        exclude = ['id', 'fecha']
-
-
-class AnaliticsDataSerializer(serializers.ModelSerializer):
-    motivo = serializers.CharField()
-    cantidad_total = serializers.StringRelatedField()
-
-    class Meta:
-        model = MovimientosCajaChica
-        exclude = ['id', 'fecha', 'cantidad']
         
 class CajaChicaPageSerializer2(serializers.ModelSerializer):
     id = serializers.IntegerField()
@@ -79,6 +45,12 @@ class CajaChicaAnalisisSerializer(serializers.Serializer):
 class CajaChicaAnalisisSerializerMid(serializers.Serializer):
     comparativa_mensual = serializers.ListField()
     tipos_de_egresos = serializers.ListField()
+    
+class CajaChicaAnalisisVehiculosSerializer(serializers.Serializer):
+    consumo_gasolina_mensual = serializers.FloatField()
+    vehiculos_mayor_consumo_4_meses = serializers.ListField()
+    datos_ultimos_4_meses = serializers.ListField()
+    consumo_anual = serializers.ListField()
     
     
 class NotasCajaChicaSerializer(serializers.ModelSerializer):

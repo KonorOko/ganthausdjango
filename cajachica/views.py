@@ -1,5 +1,5 @@
 from rest_framework import viewsets
-from .serializer import MovimientosCajaChicaSerializer, MovimientosBalanceSerializer, BalanceTotalSerializer, MovimientosDataSerializer, AnaliticsDataSerializer, CajaChicaPageSerializer, NotasCajaChicaSerializer, CajaChicaAnalisisSerializer, CajaChicaAnalisisSerializerMid
+from .serializer import MovimientosCajaChicaSerializer, CajaChicaPageSerializer, NotasCajaChicaSerializer, CajaChicaAnalisisSerializer, CajaChicaAnalisisSerializerMid, CajaChicaAnalisisVehiculosSerializer
 from .models import MovimientosCajaChica, NotasCajaChica
 from django.db.models.functions import Abs
 from django.db.models import Sum, Q, Count
@@ -11,7 +11,11 @@ from django.http import HttpResponse
 from rest_framework.views import APIView
 from django.db.models.functions import TruncMonth
 from django.db.models.functions import ExtractDay
-from calendar import month_name
+from dateutil.relativedelta import relativedelta
+from collections import defaultdict
+
+MONTH_NAMES = ["", "Ene", "Feb", "Mar", "Abr", "May",
+               "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
 
 
 class MovimientosView(viewsets.ModelViewSet):
@@ -24,222 +28,6 @@ class MovimientosView(viewsets.ModelViewSet):
         else:
             queryset = MovimientosCajaChica.objects.all().order_by('id')
         return queryset
-
-
-class MovimientosBalance(viewsets.ModelViewSet):
-    permission_classes = (DjangoModelPermissions,)
-    serializer_class = MovimientosBalanceSerializer
-
-    def get_queryset(self):
-        if MovimientosCajaChica.objects.count() == 0 or not self.request.user.groups.filter(name='Admin').exists():
-            return MovimientosCajaChica.objects.none()
-        else:
-            queryset = MovimientosCajaChica.objects.order_by(
-                'fecha').values('fecha').annotate(cantidad=Sum('cantidad'))
-            balance_acumulativo = 0
-            for item in queryset:
-                balance_acumulativo += item['cantidad']
-                item['cantidad'] = balance_acumulativo
-
-            return queryset
-
-
-class BalanceTotal(viewsets.ModelViewSet):
-    serializer_class = BalanceTotalSerializer
-    permission_classes = (DjangoModelPermissions,)
-
-    def get_queryset(self):
-        return MovimientosCajaChica.objects.none()
-
-    def list(self, request, *args, **kwargs):
-        if MovimientosCajaChica.objects.count() == 0:
-            return Response([])
-
-        total_cantidad = MovimientosCajaChica.objects.aggregate(
-            cantidad_total=Sum('cantidad'))
-        total_movimientos = MovimientosCajaChica.objects.aggregate(
-            movimientos=Count('id'))
-
-        data = {'cantidad': f"{total_cantidad['cantidad_total']:,.2f}",
-                'movimientos': total_movimientos['movimientos']}
-
-        return Response([data])
-
-
-class UltimosMovimientos(viewsets.ModelViewSet):
-    permission_classes = (DjangoModelPermissions,)
-    serializer_class = MovimientosCajaChicaSerializer
-
-    def get_queryset(self):
-        if MovimientosCajaChica.objects.count() == 0 or self.request.user.groups.filter(name='Admin').exists() == False:
-            queryset = MovimientosCajaChica.objects.none()
-            return queryset
-        else:
-            ultimos_movimientos = MovimientosCajaChica.objects.order_by("-id")[:10]
-            return ultimos_movimientos
-
-
-class MovimientosGasolina(viewsets.ModelViewSet):
-    permission_classes = (DjangoModelPermissions,)
-    serializer_class = MovimientosDataSerializer
-
-    def get_queryset(self):
-        if MovimientosCajaChica.objects.count() == 0 or self.request.user.groups.filter(name='Admin').exists() == False:
-            queryset = MovimientosCajaChica.objects.none()
-            return queryset
-        else:
-            today = timezone.now()
-            grouped_data = (MovimientosCajaChica
-                            .objects.values('motivo')
-                            .annotate(cantidad=Sum(Abs('cantidad')))
-                            .filter(fecha__month=today.month))
-            grouped_transferencias = grouped_data.filter(
-                motivo__icontains='gasolina')
-            queryset = grouped_transferencias
-            return queryset
-
-
-class MovimientosTransacciones(viewsets.ModelViewSet):
-    permission_classes = (DjangoModelPermissions,)
-    serializer_class = MovimientosDataSerializer
-
-    def get_queryset(self):
-        if MovimientosCajaChica.objects.count() == 0 or self.request.user.groups.filter(name='Admin').exists() == False:
-            queryset = MovimientosCajaChica.objects.none()
-            return queryset
-        else:
-            today = timezone.now()
-            grouped_data = (MovimientosCajaChica
-                            .objects.values('motivo')
-                            .annotate(cantidad=Sum(Abs('cantidad')))
-                            .filter(fecha__month=today.month))
-            grouped_transferencias = grouped_data.filter(
-                Q(motivo__icontains='transferencia') | Q(motivo__icontains='deposito'))
-            queryset = grouped_transferencias
-            return queryset
-
-
-class MovimientosApoyos(viewsets.ModelViewSet):
-    permission_classes = (DjangoModelPermissions,)
-    serializer_class = MovimientosDataSerializer
-
-    def get_queryset(self):
-        if MovimientosCajaChica.objects.count() == 0 or self.request.user.groups.filter(name='Admin').exists() == False:
-            queryset = MovimientosCajaChica.objects.none()
-            return queryset
-        else:
-            today = timezone.now()
-            grouped_data = (MovimientosCajaChica
-                            .objects.values('motivo')
-                            .annotate(cantidad=Sum(Abs('cantidad')))
-                            .filter(fecha__month=today.month))
-            grouped_transferencias = grouped_data.filter(
-                motivo__icontains='apoyo')
-            queryset = grouped_transferencias
-            return queryset
-        
-        
-class MovimientosComisiones(viewsets.ModelViewSet):
-    permission_classes = (DjangoModelPermissions,)
-    serializer_class = MovimientosDataSerializer
-    
-    def get_queryset(self):
-        if MovimientosCajaChica.objects.count() == 0 or self.request.user.groups.filter(name='Admin').exists() == False:
-            queryset = MovimientosCajaChica.objects.none()
-            return queryset
-        
-        else:
-            today = timezone.now()
-            grouped_data = (MovimientosCajaChica
-                            .objects.values('motivo')
-                            .annotate(cantidad=Sum(Abs('cantidad')))
-                            .filter(fecha__month=today.month))
-            grouped_transferencias = grouped_data.filter(
-                Q(motivo__icontains='comision') | Q(motivo__icontains='comisiones'))
-            queryset = grouped_transferencias
-            return queryset
-
-
-class AnaliticsData(viewsets.ModelViewSet):
-    permission_classes = (DjangoModelPermissions,)
-    serializer_class = AnaliticsDataSerializer
-
-    def get_queryset(self):
-        if MovimientosCajaChica.objects.count() == 0 or not self.request.user.groups.filter(name='Admin').exists():
-            return MovimientosCajaChica.objects.none()
-        return MovimientosCajaChica.objects.all()
-
-    def list(self, request, *args, **kwargs):
-        if MovimientosCajaChica.objects.count() == 0 or not self.request.user.groups.filter(name='Admin').exists():
-            return Response([])
-
-        today = timezone.now()
-        today.month
-        grouped_data = (MovimientosCajaChica
-                        .objects.values('motivo')
-                        .annotate(grouped_cantidad=Sum('cantidad'))
-                        .filter(fecha__month=today.month))
-
-        # gasolina
-        grouped_gasolina = grouped_data.filter(
-            motivo__icontains='gasolina')
-        gasolina_total = grouped_gasolina.aggregate(
-            cantidad_total_abs=Sum(Abs('grouped_cantidad')))
-        if gasolina_total['cantidad_total_abs'] == None:
-            gasolina_total['cantidad_total_abs'] = 0
-        dict_gasolina = {"motivo": "gasolina",
-                         'cantidad_total': f'{gasolina_total["cantidad_total_abs"]:,.2f}'}
-
-        # transferencias
-        grouped_transferencias = grouped_data.filter(
-            Q(motivo__icontains='transferencia') | Q(motivo__icontains='deposito'))
-        transferencias_total = grouped_transferencias.aggregate(
-            cantidad_total_abs=Sum(Abs('grouped_cantidad')))
-        if transferencias_total['cantidad_total_abs'] == None:
-            transferencias_total['cantidad_total_abs'] = 0
-        dict_transferencias = {"motivo": "transferencias",
-                               'cantidad_total': f'{transferencias_total["cantidad_total_abs"]:,.2f}'}
-
-        # apoyos
-        grouped_apoyos = grouped_data.filter(motivo__icontains='apoyo')
-        apoyos_total = grouped_apoyos.aggregate(
-            cantidad_total_abs=Sum(Abs('grouped_cantidad')))
-        if apoyos_total['cantidad_total_abs'] == None:
-            apoyos_total['cantidad_total_abs'] = 0
-        dict_apoyos = {"motivo": "apoyos",
-                       'cantidad_total': f'{apoyos_total["cantidad_total_abs"]:,.2f}'}
-
-        # comisiones
-        grouped_comisiones = grouped_data.filter(
-            Q(motivo__icontains='comision') | Q(motivo__icontains='comisiones'))
-        comisiones_total = grouped_comisiones.aggregate(
-            cantidad_total_abs=Sum(Abs('grouped_cantidad')))
-        if comisiones_total['cantidad_total_abs'] == None:
-            comisiones_total['cantidad_total_abs'] = 0
-        dict_comisiones = {"motivo": "comisiones",
-                           'cantidad_total': f'{comisiones_total["cantidad_total_abs"]:,.2f}'}
-
-        # otros
-        otros_registros = (
-            MovimientosCajaChica.objects
-            .exclude(motivo__icontains='gasolina')
-            .exclude(motivo__icontains='transferencia')
-            .exclude(motivo__icontains='apoyo')
-            .filter(cantidad__lt=0, fecha__month=today.month)
-            .values('motivo')
-            .annotate(total=Sum('cantidad'))
-        )
-        otros_total = otros_registros.aggregate(
-            cantidad_total_abs=Sum(Abs('total')))
-        if otros_total['cantidad_total_abs'] == None:
-            otros_total['cantidad_total_abs'] = 0
-        dict_otros = {"motivo": "otros",
-                      'cantidad_total': f'{otros_total["cantidad_total_abs"]:,.2f}'}
-
-        queryset = [dict_gasolina, dict_transferencias,
-                    dict_apoyos, dict_comisiones, dict_otros]
-
-        return Response(queryset)
 
 
 class CajaChicaPage(viewsets.GenericViewSet):
@@ -327,7 +115,11 @@ class CajaChicaAnalisis(viewsets.GenericViewSet):
                 'registros_diarios': 0,
                 'crecimiento_mensual': 0
             })
-            return Response(serializer.data)
+            if serializer.is_valid():
+                return Response(serializer.data)
+            else:
+                print(serializer.errors)
+                return Response(serializer.errors, status=400)
 
         # get data
         datos = MovimientosCajaChica.objects.all().order_by('id').all()
@@ -357,7 +149,7 @@ class CajaChicaAnalisis(viewsets.GenericViewSet):
         balance_anual_agrupado = []
         for i in range(1, 13):
             month_dict = {
-                "mes_nombre": month_name[i],
+                "mes_nombre": MONTH_NAMES[i],
                 "año_actual": grouped_months_current_year_dict.get(i, 0),
                 "año_anterior": grouped_months_previous_year_dict.get(i, 0),
             }
@@ -443,7 +235,36 @@ class CajaChicaAnalisisMid(viewsets.GenericViewSet):
         today = timezone.now()
         # or not self.request.user.groups.filter(name=GROUP_NAME).exists():
         if MovimientosCajaChica.objects.count() == 0:
-            pass
+            serializer = CajaChicaAnalisisSerializerMid(data={
+                'comparativa_mensual': [{
+                    'semana': 1,
+                    'Mes Actual': 0,
+                    'Mes Anterior': 0
+                }, {
+                    'semana': 2,
+                    'Mes Actual': 0,
+                    'Mes Anterior': 0
+                }, {
+                    'semana': 3,
+                    'Mes Actual': 0,
+                    'Mes Anterior': 0
+                }, {
+                    'semana': 4,
+                    'Mes Actual': 0,
+                    'Mes Anterior': 0}],
+                'tipos_de_egresos': [
+                    {'motivo': 'gasolina', 'cantidad': 0},
+                    {'motivo': 'transacciones', 'cantidad': 0},
+                    {'motivo': 'comisiones', 'cantidad': 0},
+                    {'motivo': 'oficina', 'cantidad': 0},
+                    {'motivo': 'otros', 'cantidad': 0}
+                ]
+            })
+            if serializer.is_valid():
+                return Response(serializer.data)
+            else:
+                print(serializer.errors)
+                return Response(serializer.errors, status=400)
 
         # get data
         grouped_days_current_month = MovimientosCajaChica.objects.filter(fecha__year=today.year, fecha__month=today.month).annotate(
@@ -455,7 +276,7 @@ class CajaChicaAnalisisMid(viewsets.GenericViewSet):
         else:
             grouped_days_previous_month = MovimientosCajaChica.objects.filter(fecha__year=today.year, fecha__month=today.month - 1).annotate(
                 dia=ExtractDay('fecha')).values('dia').annotate(cantidad=Sum('cantidad')).values('dia', 'cantidad')
-            
+
         grouped_weeks_current_month_dict = {}
         grouped_weeks_previous_month_dict = {}
 
@@ -465,15 +286,17 @@ class CajaChicaAnalisisMid(viewsets.GenericViewSet):
 
             semana = (dia - 1) // 7 + 1
 
-            grouped_weeks_current_month_dict[semana] = grouped_weeks_current_month_dict.get(semana, 0) + cantidad
-        
+            grouped_weeks_current_month_dict[semana] = grouped_weeks_current_month_dict.get(
+                semana, 0) + cantidad
+
         for item in grouped_days_previous_month:
             dia = item['dia']
             cantidad = item['cantidad']
 
             semana = (dia - 1) // 7 + 1
 
-            grouped_weeks_previous_month_dict[semana] = grouped_weeks_previous_month_dict.get(semana, 0) + cantidad
+            grouped_weeks_previous_month_dict[semana] = grouped_weeks_previous_month_dict.get(
+                semana, 0) + cantidad
 
         comparation_month = []
         for i in range(1, 5):
@@ -523,14 +346,132 @@ class CajaChicaAnalisisMid(viewsets.GenericViewSet):
         serializer = CajaChicaAnalisisSerializerMid(data={
             'comparativa_mensual': comparation_month,
             'tipos_de_egresos': [
-                {'motivo':'gasolina', 'cantidad': grouped_gasolina},
-                {'motivo':'transacciones', 'cantidad': grouped_transacciones},
-                {'motivo':'comisiones', 'cantidad': grouped_comisiones},
-                {'motivo':'oficina', 'cantidad': grouped_oficina},
-                {'motivo':'otros', 'cantidad': grouped_otros,}
+                {'motivo': 'gasolina', 'cantidad': grouped_gasolina},
+                {'motivo': 'transacciones', 'cantidad': grouped_transacciones},
+                {'motivo': 'comisiones', 'cantidad': grouped_comisiones},
+                {'motivo': 'oficina', 'cantidad': grouped_oficina},
+                {'motivo': 'otros', 'cantidad': grouped_otros, }
             ]
         })
 
+        if serializer.is_valid():
+            return Response(serializer.data)
+        else:
+            print(serializer.errors)
+            return Response(serializer.errors, status=400)
+
+
+class CajaChicaAnalisisVehiculos(viewsets.GenericViewSet):
+    # permission_classes = (DjangoModelPermissions,)
+    queryset = MovimientosCajaChica.objects.none()
+    serializer_class = CajaChicaAnalisisVehiculosSerializer
+
+    def list(self, request, *args, **kwargs):
+        GROUP_NAME = 'Admin'
+        today = timezone.now()
+        # or not self.request.user.groups.filter(name=GROUP_NAME).exists():
+        if MovimientosCajaChica.objects.count() == 0:
+            pass
+
+        # get data
+        balance_mensual = MovimientosCajaChica.objects.filter(
+            fecha__year=today.year, fecha__month=today.month, motivo__contains='GASOLINA').aggregate(cantidad=Abs(Sum('cantidad')))['cantidad']
+
+        four_months_ago = (today - relativedelta(months=3)).replace(day=1)
+
+        data_last_4_months = MovimientosCajaChica.objects.filter(
+            fecha__gte=four_months_ago, motivo__contains='GASOLINA'
+        ).annotate(
+            mes=TruncMonth('fecha')
+        ).values(
+            'mes'
+        ).annotate(
+            cantidad=Abs(Sum('cantidad'))
+        ).values('mes', 'cantidad', 'motivo')
+
+        data_last_4_months_format = []
+        vehiculos = ['01', '02', '03', '04', '05', '06']
+        data_by_month = defaultdict(dict)
+
+        # Iterar sobre los datos
+        for data in data_last_4_months:
+            # Obtener el mes y el motivo
+            mes = data['mes'].month
+            motivo = data['motivo'][:2]
+
+            # Si el motivo está en la lista de vehículos, agregarlo al diccionario
+            if motivo in vehiculos:
+                # Si el mes ya está en el diccionario, sumar la cantidad
+                if mes in data_by_month and motivo in data_by_month[mes]:
+                    data_by_month[mes][motivo] += data['cantidad']
+                else:
+                    # Si el mes o el motivo no están en el diccionario, inicializar la cantidad
+                    data_by_month[mes][motivo] = data['cantidad']
+
+        # Convertir el diccionario a una lista de diccionarios
+        data_last_4_months_format = [{'mes': mes, **motivos}
+                                     for mes, motivos in data_by_month.items()]
+
+        top_4_vehiculos = MovimientosCajaChica.objects.filter(
+            fecha__gte=four_months_ago, motivo__contains='GASOLINA'
+        ).values(
+            'motivo'
+        ).annotate(
+            cantidad=Abs(Sum('cantidad'))
+        ).order_by(
+            '-cantidad'
+        )[:4]
+
+        top_4_vehiculos = list(top_4_vehiculos)
+        top_4_vehiculos_format = []
+        for item in range(1, 5):
+            if item <= len(top_4_vehiculos):
+                top = {
+                    'top': item,
+                    'vehiculo': top_4_vehiculos[item-1]['motivo'][:2],
+                    'cantidad': top_4_vehiculos[item-1]['cantidad']
+                }
+            else:
+                top = {
+                    'top': item,
+                    'vehiculo': '00',
+                    'cantidad': 0
+                }
+            top_4_vehiculos_format.append(top)
+
+        data_year = MovimientosCajaChica.objects.filter(
+            fecha__year=today.year, motivo__contains='Gasolina'
+        ).annotate(
+            mes=TruncMonth('fecha')
+        ).values(
+            'mes'
+        ).annotate(
+            cantidad=Abs(Sum('cantidad'))
+        ).values('mes', 'cantidad', 'motivo')
+        
+        data_year_grouped = defaultdict(int)
+
+        for item in data_year:
+            # Sumar la cantidad al total para este mes
+            data_year_grouped[item['mes'].month] += item['cantidad']
+
+        data_year_grouped_format = []
+        for i in range(1, 13):
+            month_dict = {
+                "mes": MONTH_NAMES[i],
+                "cantidad": data_year_grouped.get(i, 0),
+            }
+            data_year_grouped_format.append(month_dict)
+        
+        if balance_mensual == None:
+            balance_mensual = 0
+
+        serializer = CajaChicaAnalisisVehiculosSerializer(data={
+            'consumo_gasolina_mensual': balance_mensual,
+            'vehiculos_mayor_consumo_4_meses': top_4_vehiculos_format,
+            'datos_ultimos_4_meses': data_last_4_months_format,
+            'consumo_anual': data_year_grouped_format,
+        })
         if serializer.is_valid():
             return Response(serializer.data)
         else:
@@ -571,5 +512,12 @@ class NotasCajaChicaView(viewsets.ModelViewSet):
         else:
             queryset = NotasCajaChica.objects.all().order_by('id')
             for item in queryset:
-                item.hora = item.hora.strftime("%H:%M")
+                if item.hora == None:
+                    item.hora = "--"
+                else:
+                    item.hora = item.hora.strftime("%H:%M")
+                if item.fecha == None:
+                    item.fecha = "--"
+                else:
+                    item.fecha = item.fecha.strftime("%d-%m-%Y")
             return queryset
