@@ -314,19 +314,31 @@ class CajaChicaAnalisisMid(viewsets.GenericViewSet):
 
         # gasolina
         grouped_gasolina = grouped_data.filter(
-            motivo__contains='GASOLINA').aggregate(cantidad_total=Sum(Abs('grouped_cantidad')))['cantidad_total']
+            motivo__contains='GASOLINA', cantidad__lt=0, motivo__regex=r'^\d{2}').aggregate(cantidad_total=Sum(Abs('grouped_cantidad')))['cantidad_total']
 
         # transferencias
         grouped_transacciones = grouped_data.filter(
-            Q(motivo__contains='TRANSFERENCIA') | Q(motivo__contains='DEPOSITO')).aggregate(cantidad_total=Sum(Abs('grouped_cantidad')))['cantidad_total']
+            Q(motivo__contains='TRANSFERENCIA') | Q(motivo__contains='DEPOSITO'), cantidad__lt=0).aggregate(cantidad_total=Sum(Abs('grouped_cantidad')))['cantidad_total']
 
         # comisiones
         grouped_comisiones = grouped_data.filter(
-            Q(motivo__contains='COMISION') | Q(motivo__contains='COMISIONES')).aggregate(cantidad_total=Sum(Abs('grouped_cantidad')))['cantidad_total']
+            Q(motivo__contains='COMISION') | Q(motivo__contains='COMISIONES'), cantidad__lt=0).aggregate(cantidad_total=Sum(Abs('grouped_cantidad')))['cantidad_total']
 
         # oficina
         grouped_oficina = grouped_data.filter(
-            motivo__contains='OFICINA').aggregate(cantidad_total=Sum(Abs('grouped_cantidad')))['cantidad_total']
+            motivo__contains='OFICINA', cantidad__lt=0).aggregate(cantidad_total=Sum(Abs('grouped_cantidad')))['cantidad_total']
+
+        # apoyos
+        grouped_apoyos = grouped_data.filter(
+            motivo__contains='APOYO', cantidad__lt=0).aggregate(cantidad_total=Sum(Abs('grouped_cantidad')))['cantidad_total']
+
+        # pagos
+        grouped_pagos = grouped_data.filter(
+            Q(motivo__contains='PAGO') | Q(motivo__contains='PAGOS'), cantidad__lt=0).aggregate(cantidad_total=Sum(Abs('grouped_cantidad')))['cantidad_total']
+
+        # sueldos
+        grouped_sueldos = grouped_data.filter(
+            motivo__contains='SUELDO', cantidad__lt=0).aggregate(cantidad_total=Sum(Abs('grouped_cantidad')))['cantidad_total']
 
         # otros
         grouped_otros = grouped_data.filter(
@@ -340,6 +352,12 @@ class CajaChicaAnalisisMid(viewsets.GenericViewSet):
             grouped_comisiones = 0
         if grouped_oficina == None:
             grouped_oficina = 0
+        if grouped_apoyos == None:
+            grouped_apoyos = 0
+        if grouped_pagos == None:
+            grouped_pagos = 0
+        if grouped_sueldos == None:
+            grouped_sueldos = 0
         if grouped_otros == None:
             grouped_otros = 0
 
@@ -350,6 +368,9 @@ class CajaChicaAnalisisMid(viewsets.GenericViewSet):
                 {'motivo': 'transacciones', 'cantidad': grouped_transacciones},
                 {'motivo': 'comisiones', 'cantidad': grouped_comisiones},
                 {'motivo': 'oficina', 'cantidad': grouped_oficina},
+                {'motivo': 'apoyos', 'cantidad': grouped_apoyos},
+                {'motivo': 'pagos', 'cantidad': grouped_pagos},
+                {'motivo': 'sueldos', 'cantidad': grouped_sueldos},
                 {'motivo': 'otros', 'cantidad': grouped_otros, }
             ]
         })
@@ -375,7 +396,7 @@ class CajaChicaAnalisisVehiculos(viewsets.GenericViewSet):
 
         # get data
         balance_mensual = MovimientosCajaChica.objects.filter(
-            fecha__year=today.year, fecha__month=today.month, motivo__contains='GASOLINA').aggregate(cantidad=Abs(Sum('cantidad')))['cantidad']
+            fecha__year=today.year, fecha__month=today.month, motivo__contains='GASOLINA', motivo__regex=r'^\d{2}', cantidad__lt=0).aggregate(cantidad=Abs(Sum('cantidad')))['cantidad']
 
         four_months_ago = (today - relativedelta(months=3)).replace(day=1)
 
@@ -413,7 +434,7 @@ class CajaChicaAnalisisVehiculos(viewsets.GenericViewSet):
                                      for mes, motivos in data_by_month.items()]
 
         top_4_vehiculos = MovimientosCajaChica.objects.filter(
-            fecha__gte=four_months_ago, motivo__contains='GASOLINA'
+            fecha__gte=four_months_ago, motivo__contains='GASOLINA', motivo__regex=r'^\d{2}', cantidad__lt=0
         ).values(
             'motivo'
         ).annotate(
@@ -440,7 +461,7 @@ class CajaChicaAnalisisVehiculos(viewsets.GenericViewSet):
             top_4_vehiculos_format.append(top)
 
         data_year = MovimientosCajaChica.objects.filter(
-            fecha__year=today.year, motivo__contains='GASOLINA'
+            fecha__year=today.year, motivo__contains='GASOLINA', motivo__regex=r'^\d{2}', cantidad__lt=0
         ).annotate(
             mes=TruncMonth('fecha')
         ).values(
@@ -448,7 +469,7 @@ class CajaChicaAnalisisVehiculos(viewsets.GenericViewSet):
         ).annotate(
             cantidad=Abs(Sum('cantidad'))
         ).values('mes', 'cantidad', 'motivo')
-        
+
         data_year_grouped = defaultdict(int)
 
         for item in data_year:
@@ -462,7 +483,7 @@ class CajaChicaAnalisisVehiculos(viewsets.GenericViewSet):
                 "cantidad": data_year_grouped.get(i, 0),
             }
             data_year_grouped_format.append(month_dict)
-        
+
         if balance_mensual == None:
             balance_mensual = 0
 
