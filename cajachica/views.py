@@ -440,7 +440,7 @@ class CajaChicaAnalisisVehiculos(viewsets.GenericViewSet):
             top_4_vehiculos_format.append(top)
 
         data_year = MovimientosCajaChica.objects.filter(
-            fecha__year=today.year, motivo__contains='Gasolina'
+            fecha__year=today.year, motivo__contains='GASOLINA'
         ).annotate(
             mes=TruncMonth('fecha')
         ).values(
