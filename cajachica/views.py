@@ -1,8 +1,9 @@
 from rest_framework import viewsets
-from .serializer import MovimientosCajaChicaSerializer, CajaChicaPageSerializer, NotasCajaChicaSerializer, CajaChicaAnalisisSerializer, CajaChicaAnalisisSerializerMid, CajaChicaAnalisisVehiculosSerializer
+from .serializer import MovimientosCajaChicaSerializer, CajaChicaPageSerializer, NotasCajaChicaSerializer, CajaChicaAnalisisSerializer, CajaChicaAnalisisSerializerMid, CajaChicaAnalisisVehiculosSerializer, DashboardCajaChicaSerializer
 from .models import MovimientosCajaChica, NotasCajaChica
 from django.db.models.functions import Abs
 from django.db.models import Sum, Q, Count
+from django.db.models.functions import TruncDay
 from django.utils import timezone
 from rest_framework.permissions import DjangoModelPermissions
 from rest_framework.response import Response
@@ -542,3 +543,58 @@ class NotasCajaChicaView(viewsets.ModelViewSet):
                 else:
                     item.fecha = item.fecha.strftime("%d-%m-%Y")
             return queryset
+
+
+class DashboardCajaChica(viewsets.GenericViewSet):
+    #permission_classes = (DjangoModelPermissions,)
+    queryset = MovimientosCajaChica.objects.none()
+    serializer_class = DashboardCajaChicaSerializer
+
+    def list(self, request, *args, **kwargs):
+        GROUP_NAME = 'Admin'
+        today = timezone.now()
+        # or not self.request.user.groups.filter(name=GROUP_NAME).exists():
+
+        # get data
+        balance_total = MovimientosCajaChica.objects.all().aggregate(cantidad_total=Sum('cantidad'))[
+            'cantidad_total']
+
+        # get monthly data total balance per day
+        data_per_day = MovimientosCajaChica.objects.annotate(day=TruncDay('fecha')).values('day').annotate(cantidad_total=Sum('cantidad')).order_by('day')
+
+        # calculate cumulative sum
+        cumulative_sum = 0
+        cumulative_data = []
+        for data in data_per_day:
+            cumulative_sum += data['cantidad_total']
+            cumulative_data.append({'dia': data['day'].day, 'cantidad': cumulative_sum})
+
+        # revenue
+        revenue = MovimientosCajaChica.objects.filter(
+            fecha__year=today.year, fecha__month=today.month, cantidad__gt=0).aggregate(cantidad=Sum('cantidad'))['cantidad']
+        
+        # expenses
+        expenses = MovimientosCajaChica.objects.filter(
+            fecha__year=today.year, fecha__month=today.month, cantidad__lt=0).aggregate(cantidad=Sum(Abs('cantidad')))['cantidad']
+
+        if revenue == None:
+            revenue = 0
+        if expenses == None:
+            expenses = 0
+        if balance_total == None:
+            balance_total = 0
+        if cumulative_data == None:
+            cumulative_data = []
+
+        serializer = DashboardCajaChicaSerializer(data={
+            'balance_total': round(balance_total, 2),
+            'ingresos': round(revenue, 2),
+            'egresos': round(expenses, 2),
+            'registros': cumulative_data
+        })
+
+        if serializer.is_valid():
+            return Response(serializer.data)
+        else:
+            print(serializer.errors)
+            return Response(serializer.errors, status=400)

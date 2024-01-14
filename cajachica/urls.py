@@ -9,6 +9,7 @@ router.register(r'notas', views.NotasCajaChicaView, 'notas')
 router.register(r'cajachica_analisis', views.CajaChicaAnalisis, 'cajachica_analisis')
 router.register(r'cajachica_analisismid', views.CajaChicaAnalisisMid, 'cajachica_analisismid')
 router.register(r'cajachica_analisisvehiculos', views.CajaChicaAnalisisVehiculos, 'cajachica_analisisvehiculos')
+router.register(r'dashboard_cajachica', views.DashboardCajaChica, 'dashboard_cajachica')
 
 urlpatterns = [
     path("api/v1/", include(router.urls)),

@@ -58,3 +58,9 @@ class NotasCajaChicaSerializer(serializers.ModelSerializer):
         model = NotasCajaChica
         fields = ['id', 'nota', 'fecha', 'hora']
         
+class DashboardCajaChicaSerializer(serializers.Serializer):
+    balance_total = serializers.FloatField()
+    ingresos = serializers.FloatField()
+    egresos = serializers.FloatField()
+    registros = serializers.ListField()
+        
