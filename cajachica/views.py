@@ -567,7 +567,7 @@ class DashboardCajaChica(viewsets.GenericViewSet):
         cumulative_data = []
         for data in data_per_day:
             cumulative_sum += data['cantidad_total']
-            cumulative_data.append({'dia': data['day'].day, 'cantidad': cumulative_sum})
+            cumulative_data.append({'día': data['day'].day, 'cantidad': cumulative_sum})
 
         # revenue
         revenue = MovimientosCajaChica.objects.filter(
