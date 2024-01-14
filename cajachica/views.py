@@ -103,8 +103,7 @@ class CajaChicaAnalisis(viewsets.GenericViewSet):
     def list(self, request, *args, **kwargs):
         GROUP_NAME = 'Admin'
         today = timezone.now()
-        # or not self.request.user.groups.filter(name=GROUP_NAME).exists():
-        if MovimientosCajaChica.objects.count() == 0:
+        if MovimientosCajaChica.objects.count() == 0 or not self.request.user.groups.filter(name=GROUP_NAME).exists():
             serializer = CajaChicaAnalisisSerializer(data={
                 'balance_anual_agrupado': [{}],
                 'balance_total': 0,
@@ -227,15 +226,15 @@ class CajaChicaAnalisis(viewsets.GenericViewSet):
 
 
 class CajaChicaAnalisisMid(viewsets.GenericViewSet):
-    # permission_classes = (DjangoModelPermissions,)
+    permission_classes = (DjangoModelPermissions,)
     queryset = MovimientosCajaChica.objects.none()
     serializer_class = CajaChicaAnalisisSerializerMid
 
     def list(self, request, *args, **kwargs):
         GROUP_NAME = 'Admin'
         today = timezone.now()
-        # or not self.request.user.groups.filter(name=GROUP_NAME).exists():
-        if MovimientosCajaChica.objects.count() == 0:
+
+        if MovimientosCajaChica.objects.count() == 0 or not self.request.user.groups.filter(name=GROUP_NAME).exists():
             serializer = CajaChicaAnalisisSerializerMid(data={
                 'comparativa_mensual': [{
                     'semana': 1,
@@ -384,15 +383,14 @@ class CajaChicaAnalisisMid(viewsets.GenericViewSet):
 
 
 class CajaChicaAnalisisVehiculos(viewsets.GenericViewSet):
-    # permission_classes = (DjangoModelPermissions,)
+    permission_classes = (DjangoModelPermissions,)
     queryset = MovimientosCajaChica.objects.none()
     serializer_class = CajaChicaAnalisisVehiculosSerializer
 
     def list(self, request, *args, **kwargs):
         GROUP_NAME = 'Admin'
         today = timezone.now()
-        # or not self.request.user.groups.filter(name=GROUP_NAME).exists():
-        if MovimientosCajaChica.objects.count() == 0:
+        if MovimientosCajaChica.objects.count() == 0 or not self.request.user.groups.filter(name=GROUP_NAME).exists():
             pass
 
         # get data
@@ -546,15 +544,15 @@ class NotasCajaChicaView(viewsets.ModelViewSet):
 
 
 class DashboardCajaChica(viewsets.GenericViewSet):
-    #permission_classes = (DjangoModelPermissions,)
+    permission_classes = (DjangoModelPermissions,)
     queryset = MovimientosCajaChica.objects.none()
     serializer_class = DashboardCajaChicaSerializer
 
     def list(self, request, *args, **kwargs):
         GROUP_NAME = 'Admin'
         today = timezone.now()
-        # or not self.request.user.groups.filter(name=GROUP_NAME).exists():
-
+        if MovimientosCajaChica.objects.count() == 0 or not self.request.user.groups.filter(name=GROUP_NAME).exists():
+            pass
         # get data
         balance_total = MovimientosCajaChica.objects.all().aggregate(cantidad_total=Sum('cantidad'))[
             'cantidad_total']
