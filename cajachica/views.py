@@ -526,7 +526,8 @@ class NotasCajaChicaView(viewsets.ModelViewSet):
     serializer_class = NotasCajaChicaSerializer
 
     def get_queryset(self):
-        if NotasCajaChica.objects.count() == 0 or self.request.user.groups.filter(name='Admin').exists() == False:
+        GROUP_NAME = 'Admin'
+        if NotasCajaChica.objects.count() == 0 or not self.request.user.groups.filter(name=GROUP_NAME).exists():
             queryset = NotasCajaChica.objects.none()
             return queryset
         else:
