@@ -342,7 +342,7 @@ class CajaChicaAnalisisMid(viewsets.GenericViewSet):
 
         # otros
         grouped_otros = grouped_data.filter(
-            ~Q(motivo__contains='GASOLINA') & ~Q(motivo__contains='TRASNFERENCIA') & ~Q(motivo__contains='COMISION') & ~Q(motivo__contains='COMISIONES') & ~Q(motivo__contains='OFICINA') & ~Q(motivo__contains='APOYO') & ~Q(motivo__contains='PAGO') & ~Q(motivo__contains='PAGOS') & ~Q(motivo__contains='SUELDO'), cantidad__lt=0).aggregate(cantidad_total=Sum(Abs('grouped_cantidad')))['cantidad_total']
+            ~Q(motivo__contains='GASOLINA') & ~Q(motivo__contains='TRASNFERENCIA') & ~Q(motivo__contains='DEPOSITO') & ~Q(motivo__contains='COMISION') & ~Q(motivo__contains='COMISIONES') & ~Q(motivo__contains='OFICINA') & ~Q(motivo__contains='APOYO') & ~Q(motivo__contains='PAGO') & ~Q(motivo__contains='PAGOS') & ~Q(motivo__contains='SUELDO'), cantidad__lt=0).aggregate(cantidad_total=Sum(Abs('grouped_cantidad')))['cantidad_total']
 
         if grouped_gasolina == None:
             grouped_gasolina = 0
