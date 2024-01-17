@@ -64,3 +64,6 @@ class DashboardCajaChicaSerializer(serializers.Serializer):
     egresos = serializers.FloatField()
     registros = serializers.ListField()
         
+
+class DashboardNotificacionesSerializer(serializers.Serializer):
+    notas_proximas = serializers.ListField()

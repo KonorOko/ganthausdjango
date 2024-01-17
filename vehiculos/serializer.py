@@ -31,3 +31,9 @@ class NotasVehiculosSerializer(serializers.ModelSerializer):
     class Meta:
         model = NotasVehiculos
         fields = ['id', 'nota', 'fecha', 'hora']
+        
+
+class DashboardNotificacionesSerializer(serializers.Serializer):
+    tenencias_proximas = serializers.ListField()
+    verificaciones_proximas = serializers.ListField()
+    servicios_proximos = serializers.ListField()

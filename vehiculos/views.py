@@ -1,6 +1,9 @@
 from rest_framework import viewsets
-from .serializer import VehiculosSerializer, VerificacionesSerializer, FirstVerificacionesSerializer, TenenciasSerializer, ServiciosSerializer, NotasVehiculosSerializer
+from .serializer import VehiculosSerializer, VerificacionesSerializer, FirstVerificacionesSerializer, TenenciasSerializer, ServiciosSerializer, NotasVehiculosSerializer, DashboardNotificacionesSerializer
 from .models import Vehiculos, Verificaciones, Tenencias, Servicios, NotasVehiculos
+from datetime import datetime
+from rest_framework.response import Response
+from django.forms.models import model_to_dict
 
 # Create your views here.
 class VehiculosView(viewsets.ModelViewSet):
@@ -76,3 +79,44 @@ class NotasVehiculosView(viewsets.ModelViewSet):
                 else:
                     item.fecha = item.fecha.strftime("%d-%m-%Y")
             return queryset
+        
+        
+class DashboardNotificacionesView(viewsets.GenericViewSet):
+    serializer_class = DashboardNotificacionesSerializer
+    queryset = []
+    
+    def list(self, request, *args, **kwargs):
+        today = datetime.now()
+        procesos_proximos = []
+
+        if Verificaciones.objects.count() > 0:
+            data_verificaciones = Verificaciones.objects.all().order_by('fecha')[:3]
+            for item in data_verificaciones:
+                if item.fecha.month == today.month:
+                    procesos_proximos.append({
+                        'vehiculo': item.vehiculo.id,
+                        'tipo': 'Verificación',
+                        'fecha': item.fecha
+                    })
+
+        if Tenencias.objects.count() > 0:
+            data_tenencias = Tenencias.objects.all().order_by('fecha')[:3]
+            for item in data_tenencias:
+                if item.fecha.month == today.month:
+                    procesos_proximos.append({
+                        'vehiculo': item.vehiculo.id,
+                        'tipo': 'Tenencia',
+                        'fecha': item.fecha
+                    })
+
+        if Servicios.objects.count() > 0:
+            data_servicios = Servicios.objects.all().order_by('fecha')[:3]
+            for item in data_servicios:
+                if item.fecha.month == today.month:
+                    procesos_proximos.append({
+                        'vehiculo': item.vehiculo.id,
+                        'tipo': 'Servicio',
+                        'fecha': item.fecha
+                    })
+        print(procesos_proximos)
+        return Response(procesos_proximos)

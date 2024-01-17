@@ -1,5 +1,5 @@
 from rest_framework import viewsets
-from .serializer import MovimientosCajaChicaSerializer, CajaChicaPageSerializer, NotasCajaChicaSerializer, CajaChicaAnalisisSerializer, CajaChicaAnalisisSerializerMid, CajaChicaAnalisisVehiculosSerializer, DashboardCajaChicaSerializer
+from .serializer import MovimientosCajaChicaSerializer, CajaChicaPageSerializer, NotasCajaChicaSerializer, CajaChicaAnalisisSerializer, CajaChicaAnalisisSerializerMid, CajaChicaAnalisisVehiculosSerializer, DashboardCajaChicaSerializer, DashboardNotificacionesSerializer
 from .models import MovimientosCajaChica, NotasCajaChica
 from django.db.models.functions import Abs
 from django.db.models import Sum, Q, Count
@@ -595,5 +595,7 @@ class DashboardCajaChica(viewsets.GenericViewSet):
         if serializer.is_valid():
             return Response(serializer.data)
         else:
-            print(serializer.errors)
             return Response(serializer.errors, status=400)
+
+class DashboardNotificaciones(viewsets.GenericViewSet):
+    pass
