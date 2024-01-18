@@ -6,4 +6,3 @@ class VentasSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ventas
         fields = '__all__'
-
