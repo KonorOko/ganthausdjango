@@ -100,6 +100,7 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
 '''
 DATABASES = {
     'default': dj_database_url.config(
