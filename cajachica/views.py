@@ -87,7 +87,7 @@ class CajaChicaPage(viewsets.GenericViewSet):
             'registros_diarios': registros_diarios,
             'crecimiento_mensual': round(crecimiento_mensual, 2)
         })
-
+        print(serializer)
         if serializer.is_valid():
             return Response(serializer.data)
         else:
